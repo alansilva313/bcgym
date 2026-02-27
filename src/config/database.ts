@@ -1,6 +1,6 @@
 import { Sequelize, Options } from 'sequelize';
 import dotenv from 'dotenv';
-import 'pg'; // Force Vercel to bundle the pg module
+import * as pg from 'pg';
 
 dotenv.config();
 
@@ -8,6 +8,7 @@ const connectionString = process.env.DATABASE_URL;
 
 const sequelizeOptions: Options = {
     dialect: (process.env.DB_DIALECT as any) || 'postgres',
+    dialectModule: pg,
     logging: false,
     define: {
         underscored: true, // This will map camelCase properties to snake_case columns
