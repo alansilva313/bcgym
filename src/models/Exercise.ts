@@ -39,7 +39,7 @@ Exercise.init({
         allowNull: true,
     },
     gif_url: {
-        type: DataTypes.STRING,
+        type: DataTypes.TEXT,
         allowNull: true,
     },
     type: {
