@@ -1,0 +1,22 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.Measurement = exports.WorkoutSession = exports.Hydration = exports.WorkoutExercise = exports.Workout = exports.Exercise = exports.User = void 0;
+const User_1 = require("./User");
+Object.defineProperty(exports, "User", { enumerable: true, get: function () { return User_1.User; } });
+const Exercise_1 = require("./Exercise");
+Object.defineProperty(exports, "Exercise", { enumerable: true, get: function () { return Exercise_1.Exercise; } });
+const Workout_1 = require("./Workout");
+Object.defineProperty(exports, "Workout", { enumerable: true, get: function () { return Workout_1.Workout; } });
+const WorkoutExercise_1 = require("./WorkoutExercise");
+Object.defineProperty(exports, "WorkoutExercise", { enumerable: true, get: function () { return WorkoutExercise_1.WorkoutExercise; } });
+const Hydration_1 = require("./Hydration");
+Object.defineProperty(exports, "Hydration", { enumerable: true, get: function () { return Hydration_1.Hydration; } });
+const WorkoutSession_1 = require("./WorkoutSession");
+Object.defineProperty(exports, "WorkoutSession", { enumerable: true, get: function () { return WorkoutSession_1.WorkoutSession; } });
+const Measurement_1 = require("./Measurement");
+Object.defineProperty(exports, "Measurement", { enumerable: true, get: function () { return Measurement_1.Measurement; } });
+// Relationships
+User_1.User.hasMany(Hydration_1.Hydration, { foreignKey: 'userId' });
+Hydration_1.Hydration.belongsTo(User_1.User, { foreignKey: 'userId' });
+User_1.User.hasMany(Measurement_1.Measurement, { foreignKey: 'userId' });
+Measurement_1.Measurement.belongsTo(User_1.User, { foreignKey: 'userId' });
