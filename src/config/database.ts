@@ -1,5 +1,6 @@
 import { Sequelize, Options } from 'sequelize';
 import dotenv from 'dotenv';
+import 'pg'; // Force Vercel to bundle the pg module
 
 dotenv.config();
 
