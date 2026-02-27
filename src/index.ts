@@ -22,20 +22,19 @@ app.get('/', (req, res) => {
     res.json({ message: 'Gym App API - Status: Active' });
 });
 
-// Database Sync
-sequelize.sync({ alter: true }).then(async () => {
-    console.log('Database connected and synchronized.');
-    await seedExercises(); // Seed the database
-    await translateExistingExercises(); // Localize existing records
+// Start listening and syncing only if NOT running on Vercel
+if (process.env.NODE_ENV !== 'production' && !process.env.VERCEL) {
+    sequelize.sync({ alter: true }).then(async () => {
+        console.log('Database connected and synchronized.');
+        await seedExercises(); // Seed the database
+        await translateExistingExercises(); // Localize existing records
 
-    // Start listening only if NOT running on Vercel
-    if (process.env.NODE_ENV !== 'production' && !process.env.VERCEL) {
         app.listen(PORT, () => {
             console.log(`Server is running on port ${PORT}`);
         });
-    }
-}).catch(err => {
-    console.error('Error synchronizing database:', err);
-});
+    }).catch(err => {
+        console.error('Error synchronizing database:', err);
+    });
+}
 
 export default app;
