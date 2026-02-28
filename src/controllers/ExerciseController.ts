@@ -18,6 +18,17 @@ export const getAllExercises = async (req: Request, res: Response) => {
     }
 };
 
+const normalizeGifUrl = (url: string) => {
+    if (!url) return url;
+    if (url.includes('localhost') || url.includes('127.0.0.1')) {
+        const parts = url.split('/uploads/');
+        if (parts.length > 1) {
+            return `/uploads/${parts[1]}`;
+        }
+    }
+    return url;
+};
+
 export const createExercise = async (req: Request, res: Response) => {
     try {
         const { name, muscle_group, level, equipment, description, gif_url, type } = req.body;
@@ -28,7 +39,7 @@ export const createExercise = async (req: Request, res: Response) => {
             level,
             equipment,
             description,
-            gif_url,
+            gif_url: normalizeGifUrl(gif_url),
             type
         });
 
@@ -63,7 +74,7 @@ export const updateExercise = async (req: Request, res: Response) => {
             level,
             equipment,
             description,
-            gif_url,
+            gif_url: normalizeGifUrl(gif_url),
             type
         });
 
