@@ -16,6 +16,7 @@ export const createSession = async (req: Request, res: Response) => {
             avgTimeBetweenSets = 0,
             exerciseLogs = [],
             totalVolumeKg = 0,
+            caloriesBurned = 0,
             status = 'active'
         } = req.body;
 
@@ -32,6 +33,7 @@ export const createSession = async (req: Request, res: Response) => {
             exerciseLogs: JSON.stringify(exerciseLogs),
             status,
             completedAt: status === 'completed' ? new Date() : null,
+            caloriesBurned,
         });
 
         res.status(201).json({ message: 'Sessão iniciada', session });
@@ -184,6 +186,7 @@ export const updateSession = async (req: Request, res: Response) => {
             avgTimeBetweenSets,
             exerciseLogs,
             totalVolumeKg,
+            caloriesBurned,
             status = 'completed'
         } = req.body;
 
@@ -218,6 +221,7 @@ export const updateSession = async (req: Request, res: Response) => {
             exerciseLogs: JSON.stringify(exerciseLogs || []),
             status,
             completedAt: status === 'completed' ? new Date() : session.completedAt,
+            caloriesBurned: caloriesBurned !== undefined ? caloriesBurned : session.caloriesBurned,
         });
 
         res.json({

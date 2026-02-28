@@ -38,6 +38,7 @@ class WorkoutSession extends Model {
     public exerciseLogs!: string;        // JSON string with per-set detail
     public status!: 'active' | 'completed' | 'cancelled';
     public completedAt?: Date | null;
+    public caloriesBurned?: number;
 }
 
 WorkoutSession.init({
@@ -103,6 +104,11 @@ WorkoutSession.init({
     completedAt: {
         type: DataTypes.DATE,
         allowNull: true,
+    },
+    caloriesBurned: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+        defaultValue: 0,
     },
 }, {
     sequelize,
