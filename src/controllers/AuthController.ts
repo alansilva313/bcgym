@@ -19,7 +19,7 @@ const generatePairingCode = () => {
 
 export const register = async (req: Request, res: Response) => {
     try {
-        const { name, email, password, goal, height, weight, gender, waterReminderInterval, workoutTime } = req.body;
+        const { name, email, password, goal, height, weight, gender, waterReminderInterval, workoutTime, role, licenseNumber } = req.body;
 
         const existingUser = await User.findOne({ where: { email } });
         if (existingUser) {
@@ -41,7 +41,8 @@ export const register = async (req: Request, res: Response) => {
             language: req.body.language || 'pt',
             workoutTime: workoutTime || null,
             pairingCode: generatePairingCode(),
-            role: req.body.role || 'student'
+            role: role || 'student',
+            licenseNumber: licenseNumber || null
         });
 
         const token = jwt.sign({ id: user.id }, JWT_SECRET, { expiresIn: '7d' });

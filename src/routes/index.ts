@@ -60,8 +60,7 @@ router.get('/users', UserController.getAllUsers);
 router.delete('/users/:id', UserController.deleteUser);
 
 // Admin Stats
-router.get('/admin/stats', AdminController.getDashboardStats);
-
+router.get('/admin/stats', authMiddleware, AdminController.getDashboardStats);
 // Trainer Actions
 router.post('/trainer/link', authMiddleware, TrainerController.linkStudent);
 router.get('/trainer/students', authMiddleware, TrainerController.getMyStudents);
