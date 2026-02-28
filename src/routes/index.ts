@@ -53,11 +53,21 @@ router.delete('/measurements/:id', authMiddleware, MeasurementController.delete)
 router.get('/users', UserController.getAllUsers);
 router.delete('/users/:id', UserController.deleteUser);
 
+import { uploadToSupabase } from '../services/supabaseStorage';
+
 // Upload
-router.post('/upload', upload.single('gif'), (req, res) => {
-    if (!req.file) return res.status(400).json({ error: 'Nenhum arquivo enviado' });
-    const url = `${req.protocol}://${req.get('host')}/uploads/${req.file.filename}`;
-    res.json({ url });
+router.post('/upload', upload.single('gif'), async (req, res) => {
+    try {
+        if (!req.file) return res.status(400).json({ error: 'Nenhum arquivo enviado' });
+
+        // Envia para o Supabase Storage em vez de salvar no disco local
+        const url = await uploadToSupabase(req.file);
+
+        res.json({ url });
+    } catch (error: any) {
+        console.error('Erro no upload para o Supabase:', error.message);
+        res.status(500).json({ error: 'Falha ao processar upload para o Supabase.' });
+    }
 });
 
 export default router;
