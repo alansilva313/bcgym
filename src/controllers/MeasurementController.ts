@@ -32,11 +32,31 @@ export class MeasurementController {
             const userId = (req as any).userId;
             const measurement = await Measurement.findOne({
                 where: { userId },
-                order: [['date', 'DESC']]
+                order: [['date', 'DESC'], ['createdAt', 'DESC']]
             });
             res.json(measurement);
         } catch (error) {
             res.status(500).json({ error: 'Erro ao buscar última medida' });
+        }
+    }
+
+    static async delete(req: Request, res: Response) {
+        try {
+            const userId = (req as any).userId;
+            const { id } = req.params;
+
+            const measurement = await Measurement.findOne({
+                where: { id, userId }
+            });
+
+            if (!measurement) {
+                return res.status(404).json({ error: 'Medida não encontrada' });
+            }
+
+            await measurement.destroy();
+            res.json({ message: 'Medida excluída com sucesso' });
+        } catch (error) {
+            res.status(500).json({ error: 'Erro ao excluir medida' });
         }
     }
 }

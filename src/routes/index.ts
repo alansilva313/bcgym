@@ -47,6 +47,7 @@ router.get('/hydration/month', authMiddleware, HydrationController.getMonth);
 router.post('/measurements', authMiddleware, MeasurementController.create);
 router.get('/measurements', authMiddleware, MeasurementController.getAll);
 router.get('/measurements/latest', authMiddleware, MeasurementController.getLatest);
+router.delete('/measurements/:id', authMiddleware, MeasurementController.delete);
 
 // Users
 router.get('/users', UserController.getAllUsers);
