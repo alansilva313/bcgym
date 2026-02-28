@@ -15,6 +15,7 @@ class User extends Model {
     public language!: string;
     public gender!: string;
     public googleId?: string;
+    public waterReminderInterval!: number;
 }
 
 User.init({
@@ -69,6 +70,11 @@ User.init({
     gender: {
         type: DataTypes.STRING,
         allowNull: true,
+    },
+    waterReminderInterval: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        defaultValue: 0,
     }
 }, {
     sequelize,

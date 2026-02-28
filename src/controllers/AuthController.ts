@@ -10,7 +10,7 @@ const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 export const register = async (req: Request, res: Response) => {
     try {
-        const { name, email, password, goal, height, weight, gender } = req.body;
+        const { name, email, password, goal, height, weight, gender, waterReminderInterval } = req.body;
 
         const existingUser = await User.findOne({ where: { email } });
         if (existingUser) {
@@ -27,6 +27,7 @@ export const register = async (req: Request, res: Response) => {
             height,
             weight,
             gender,
+            waterReminderInterval: waterReminderInterval || 0,
             language: req.body.language || 'pt'
         });
 
@@ -126,7 +127,7 @@ export const getMe = async (req: Request, res: Response) => {
 export const updateMe = async (req: Request, res: Response) => {
     try {
         const userId = (req as any).userId;
-        const { name, goal, height, weight, language, age, birthDate, gender } = req.body;
+        const { name, goal, height, weight, language, age, birthDate, gender, waterReminderInterval } = req.body;
 
         const user = await User.findByPk(userId);
         if (!user) {
@@ -141,7 +142,8 @@ export const updateMe = async (req: Request, res: Response) => {
             language: language || user.language,
             age: age !== undefined ? age : user.age,
             birthDate: birthDate !== undefined ? birthDate : user.birthDate,
-            gender: gender || user.gender
+            gender: gender || user.gender,
+            waterReminderInterval: waterReminderInterval !== undefined ? waterReminderInterval : user.waterReminderInterval
         });
 
         res.json(user);
