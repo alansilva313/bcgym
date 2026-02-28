@@ -36,7 +36,7 @@ class WorkoutSession extends Model {
     public avgTimeBetweenSets!: number;  // Average time between completing sets (seconds)
     public exerciseLogs!: string;        // JSON string with per-set detail
     public status!: 'active' | 'completed' | 'cancelled';
-    public completedAt!: Date;
+    public completedAt?: Date | null;
 }
 
 WorkoutSession.init({
@@ -101,8 +101,7 @@ WorkoutSession.init({
     },
     completedAt: {
         type: DataTypes.DATE,
-        allowNull: false,
-        defaultValue: DataTypes.NOW,
+        allowNull: true,
     },
 }, {
     sequelize,

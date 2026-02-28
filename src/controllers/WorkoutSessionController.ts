@@ -75,7 +75,11 @@ export const getSessionById = async (req: Request, res: Response) => {
         const userId = (req as any).userId;
         const { id } = req.params;
 
-        const session = await WorkoutSession.findOne({ where: { id, userId } });
+        if (!id || id === 'null' || isNaN(Number(id))) {
+            return res.status(400).json({ error: 'Invalid session ID' });
+        }
+
+        const session = await WorkoutSession.findOne({ where: { id: Number(id), userId } });
         if (!session) return res.status(404).json({ error: 'Session not found' });
 
         res.json({
@@ -109,9 +113,10 @@ export const getStatsSummary = async (req: Request, res: Response) => {
             ? Math.round(sessions.reduce((a, s) => a + s.avgTimeBetweenSets, 0) / total)
             : 0;
 
-        // Streak: consecutive days with at least one session
-        const dates = [...new Set(sessions.map(s =>
-            new Date(s.completedAt).toDateString()
+        // Streak: only completed sessions with a date
+        const completedSessions = sessions.filter(s => s.status === 'completed' && s.completedAt);
+        const dates = [...new Set(completedSessions.map(s =>
+            new Date(s.completedAt!).toDateString()
         ))].sort((a, b) => new Date(b).getTime() - new Date(a).getTime());
 
         let streak = 0;
@@ -166,6 +171,11 @@ export const updateSession = async (req: Request, res: Response) => {
     try {
         const userId = (req as any).userId;
         const { id } = req.params;
+
+        if (!id || id === 'null' || isNaN(Number(id))) {
+            return res.status(400).json({ error: 'Invalid session ID' });
+        }
+
         const {
             totalTimeSeconds,
             totalSetsCompleted,
@@ -228,7 +238,12 @@ export const deleteSession = async (req: Request, res: Response) => {
     try {
         const userId = (req as any).userId;
         const { id } = req.params;
-        await WorkoutSession.destroy({ where: { id, userId } });
+
+        if (!id || id === 'null' || isNaN(Number(id))) {
+            return res.status(400).json({ error: 'Invalid session ID' });
+        }
+
+        await WorkoutSession.destroy({ where: { id: Number(id), userId } });
         res.status(204).send();
     } catch (error) {
         res.status(500).json({ error: 'Failed to delete session' });

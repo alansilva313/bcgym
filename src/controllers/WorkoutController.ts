@@ -51,8 +51,13 @@ export const getWorkoutById = async (req: Request, res: Response) => {
     try {
         const userId = (req as any).userId;
         const { id } = req.params;
+
+        if (!id || id === 'null' || isNaN(Number(id))) {
+            return res.status(400).json({ error: 'Invalid workout ID' });
+        }
+
         const workout = await Workout.findOne({
-            where: { id, userId },
+            where: { id: Number(id), userId },
             include: [
                 {
                     model: WorkoutExercise,
