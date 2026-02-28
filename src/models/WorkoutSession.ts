@@ -18,6 +18,7 @@ import { Workout } from './Workout';
  *         timeBetweenSets: number,   // seconds between this set and the previous set
  *         restTimeTaken: number,     // seconds of rest the user actually took
  *         restTimeOffered: number,   // seconds offered (60s default)
+ *         load: string,              // weight/load used (e.g. '20kg' or 'Anilha')
  *       }
  *     ]
  *   }

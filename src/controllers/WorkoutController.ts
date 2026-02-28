@@ -22,6 +22,7 @@ export const createWorkout = async (req: Request, res: Response) => {
                     exerciseId: item.exerciseId,
                     sets: item.sets,
                     reps: item.reps,
+                    load: item.load || '0',
                     rest_time: item.rest_time
                 });
             }
@@ -94,6 +95,7 @@ export const updateWorkout = async (req: Request, res: Response) => {
                     exerciseId: item.exerciseId,
                     sets: item.sets,
                     reps: item.reps,
+                    load: item.load || '0',
                     rest_time: item.rest_time || '60s',
                 });
             }

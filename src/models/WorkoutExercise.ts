@@ -9,6 +9,7 @@ class WorkoutExercise extends Model {
     public exerciseId!: number;
     public sets!: number;
     public reps!: number;
+    public load!: string; // Load/Weight used
     public rest_time!: string; // e.g. '60s'
 }
 
@@ -41,6 +42,10 @@ WorkoutExercise.init({
     reps: {
         type: DataTypes.INTEGER,
         defaultValue: 10,
+    },
+    load: {
+        type: DataTypes.STRING,
+        defaultValue: '0',
     },
     rest_time: {
         type: DataTypes.STRING,
