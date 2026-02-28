@@ -9,6 +9,8 @@ class User extends Model {
     public goal!: string;
     public height!: number;
     public weight!: number;
+    public initialWeight!: number;
+    public targetWeight!: number;
     public age!: number;
     public birthDate!: Date;
     public isAdmin!: boolean;
@@ -54,6 +56,14 @@ User.init({
         allowNull: true,
     },
     weight: {
+        type: DataTypes.FLOAT,
+        allowNull: true,
+    },
+    initialWeight: {
+        type: DataTypes.FLOAT,
+        allowNull: true,
+    },
+    targetWeight: {
         type: DataTypes.FLOAT,
         allowNull: true,
     },

@@ -14,6 +14,12 @@ const sequelizeOptions: Options = {
         underscored: true, // This will map camelCase properties to snake_case columns
         timestamps: true,
     },
+    pool: {
+        max: 3, // Reduce max connections for cloud pooler limits
+        min: 0,
+        acquire: 30000,
+        idle: 10000,
+    },
 };
 
 const sequelize = connectionString

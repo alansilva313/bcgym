@@ -26,6 +26,7 @@ export const register = async (req: Request, res: Response) => {
             goal,
             height,
             weight,
+            initialWeight: weight, // Set initial weight on register
             gender,
             waterReminderInterval: waterReminderInterval || 0,
             language: req.body.language || 'pt',
@@ -128,14 +129,14 @@ export const getMe = async (req: Request, res: Response) => {
 export const updateMe = async (req: Request, res: Response) => {
     try {
         const userId = (req as any).userId;
-        const { name, goal, height, weight, language, age, birthDate, gender, waterReminderInterval, workoutTime } = req.body;
+        const { name, goal, height, weight, language, age, birthDate, gender, waterReminderInterval, workoutTime, targetWeight } = req.body;
 
         const user = await User.findByPk(userId);
         if (!user) {
             return res.status(404).json({ error: 'Usuário não encontrado' });
         }
 
-        await user.update({
+        const updates: any = {
             name: name || user.name,
             goal: goal || user.goal,
             height: height !== undefined ? height : user.height,
@@ -145,8 +146,16 @@ export const updateMe = async (req: Request, res: Response) => {
             birthDate: birthDate !== undefined ? birthDate : user.birthDate,
             gender: gender || user.gender,
             waterReminderInterval: waterReminderInterval !== undefined ? waterReminderInterval : user.waterReminderInterval,
-            workoutTime: workoutTime !== undefined ? workoutTime : user.workoutTime
-        });
+            workoutTime: workoutTime !== undefined ? workoutTime : user.workoutTime,
+            targetWeight: targetWeight !== undefined ? targetWeight : user.targetWeight
+        };
+
+        // If user never had an initial weight set and now has weight, set it
+        if (!user.initialWeight && updates.weight) {
+            updates.initialWeight = updates.weight;
+        }
+
+        await user.update(updates);
 
         res.json(user);
     } catch (error) {
