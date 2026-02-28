@@ -2,19 +2,21 @@ import { Request, Response } from 'express';
 import { WorkoutSession } from '../models/WorkoutSession';
 import { Op } from 'sequelize';
 
-/** POST /workout-sessions — save a completed session */
+/** POST /workout-sessions — start or save a session */
 export const createSession = async (req: Request, res: Response) => {
     try {
         const userId = (req as any).userId;
         const {
             workoutId,
             workoutName,
-            totalTimeSeconds,
-            totalSetsCompleted,
-            totalExercises,
-            avgRestTimeTaken,
-            avgTimeBetweenSets,
-            exerciseLogs,
+            totalTimeSeconds = 0,
+            totalSetsCompleted = 0,
+            totalExercises = 0,
+            avgRestTimeTaken = 0,
+            avgTimeBetweenSets = 0,
+            exerciseLogs = [],
+            totalVolumeKg = 0,
+            status = 'active'
         } = req.body;
 
         const session = await WorkoutSession.create({
@@ -24,16 +26,18 @@ export const createSession = async (req: Request, res: Response) => {
             totalTimeSeconds,
             totalSetsCompleted,
             totalExercises,
-            avgRestTimeTaken: avgRestTimeTaken || 0,
-            avgTimeBetweenSets: avgTimeBetweenSets || 0,
-            exerciseLogs: JSON.stringify(exerciseLogs || []),
-            completedAt: new Date(),
+            totalVolumeKg,
+            avgRestTimeTaken,
+            avgTimeBetweenSets,
+            exerciseLogs: JSON.stringify(exerciseLogs),
+            status,
+            completedAt: status === 'completed' ? new Date() : null,
         });
 
-        res.status(201).json({ message: 'Session saved', session });
+        res.status(201).json({ message: 'Sessão iniciada', session });
     } catch (error) {
         console.error('Create session error:', error);
-        res.status(500).json({ error: 'Failed to save session' });
+        res.status(500).json({ error: 'Failed to start session' });
     }
 };
 
@@ -131,5 +135,102 @@ export const getStatsSummary = async (req: Request, res: Response) => {
     } catch (error) {
         console.error('Stats summary error:', error);
         res.status(500).json({ error: 'Failed to get stats' });
+    }
+};
+
+/** GET /workout-sessions/active — check if user has a session in progress */
+export const getActiveSession = async (req: Request, res: Response) => {
+    try {
+        const userId = (req as any).userId;
+        const session = await WorkoutSession.findOne({
+            where: { userId, status: 'active' },
+            order: [['createdAt', 'DESC']]
+        });
+
+        if (!session) return res.json(null);
+
+        res.json({
+            ...session.toJSON(),
+            exerciseLogs: (() => {
+                try { return JSON.parse(session.exerciseLogs); }
+                catch { return []; }
+            })(),
+        });
+    } catch (error) {
+        res.status(500).json({ error: 'Failed to check active session' });
+    }
+};
+
+/** PATCH /workout-sessions/:id — update/complete a session */
+export const updateSession = async (req: Request, res: Response) => {
+    try {
+        const userId = (req as any).userId;
+        const { id } = req.params;
+        const {
+            totalTimeSeconds,
+            totalSetsCompleted,
+            totalExercises,
+            avgRestTimeTaken,
+            avgTimeBetweenSets,
+            exerciseLogs,
+            totalVolumeKg,
+            status = 'completed'
+        } = req.body;
+
+        const session = await WorkoutSession.findOne({ where: { id, userId } });
+        if (!session) return res.status(404).json({ error: 'Session not found' });
+
+        // Calculate XP only if finalizing
+        let gainedXP = 0;
+        let user = null;
+
+        if (status === 'completed' && session.status !== 'completed') {
+            const setXP = (totalSetsCompleted || 0) * 10;
+            const volumeXP = Math.floor((totalVolumeKg || 0) / 10);
+            const bonusXP = 50;
+            gainedXP = setXP + volumeXP + bonusXP;
+
+            user = await require('../models/User').User.findByPk(userId);
+            if (user) {
+                user.xp = (user.xp || 0) + gainedXP;
+                user.level = Math.floor(user.xp / 1000) + 1;
+                await user.save();
+            }
+        }
+
+        await session.update({
+            totalTimeSeconds,
+            totalSetsCompleted,
+            totalExercises,
+            totalVolumeKg: totalVolumeKg || 0,
+            avgRestTimeTaken: avgRestTimeTaken || 0,
+            avgTimeBetweenSets: avgTimeBetweenSets || 0,
+            exerciseLogs: JSON.stringify(exerciseLogs || []),
+            status,
+            completedAt: status === 'completed' ? new Date() : session.completedAt,
+        });
+
+        res.json({
+            message: status === 'completed' ? 'Treino finalizado!' : 'Progresso salvo!',
+            session,
+            gainedXP,
+            currentLevel: user?.level,
+            totalXP: user?.xp
+        });
+    } catch (error) {
+        console.error('Update session error:', error);
+        res.status(500).json({ error: 'Failed to update session' });
+    }
+};
+
+/** DELETE /workout-sessions/:id — cancel/abandon session */
+export const deleteSession = async (req: Request, res: Response) => {
+    try {
+        const userId = (req as any).userId;
+        const { id } = req.params;
+        await WorkoutSession.destroy({ where: { id, userId } });
+        res.status(204).send();
+    } catch (error) {
+        res.status(500).json({ error: 'Failed to delete session' });
     }
 };

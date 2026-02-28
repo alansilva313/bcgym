@@ -31,9 +31,11 @@ class WorkoutSession extends Model {
     public totalTimeSeconds!: number;    // Total session duration
     public totalSetsCompleted!: number;
     public totalExercises!: number;
+    public totalVolumeKg!: number;      // Total weight lifted in the session (kg)
     public avgRestTimeTaken!: number;    // Average rest actually taken (seconds)
     public avgTimeBetweenSets!: number;  // Average time between completing sets (seconds)
     public exerciseLogs!: string;        // JSON string with per-set detail
+    public status!: 'active' | 'completed' | 'cancelled';
     public completedAt!: Date;
 }
 
@@ -72,6 +74,11 @@ WorkoutSession.init({
         allowNull: false,
         defaultValue: 0,
     },
+    totalVolumeKg: {
+        type: DataTypes.FLOAT,
+        allowNull: false,
+        defaultValue: 0,
+    },
     avgRestTimeTaken: {
         type: DataTypes.FLOAT,
         allowNull: false,
@@ -86,6 +93,11 @@ WorkoutSession.init({
         type: DataTypes.TEXT,   // stored as JSON string
         allowNull: true,
         defaultValue: '[]',
+    },
+    status: {
+        type: DataTypes.ENUM('active', 'completed', 'cancelled'),
+        allowNull: false,
+        defaultValue: 'active',
     },
     completedAt: {
         type: DataTypes.DATE,

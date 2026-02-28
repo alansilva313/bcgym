@@ -6,6 +6,7 @@ import * as WorkoutSessionController from '../controllers/WorkoutSessionControll
 import { HydrationController } from '../controllers/HydrationController';
 import { MeasurementController } from '../controllers/MeasurementController';
 import * as UserController from '../controllers/UserController';
+import * as AdminController from '../controllers/AdminController';
 import { authMiddleware } from '../middleware/auth';
 import { upload } from '../middleware/upload';
 import { uploadToSupabase } from '../services/supabaseStorage';
@@ -36,8 +37,11 @@ router.delete('/workouts/:id', authMiddleware, WorkoutController.deleteWorkout);
 // Workout Sessions (history + stats)
 router.post('/workout-sessions', authMiddleware, WorkoutSessionController.createSession);
 router.get('/workout-sessions', authMiddleware, WorkoutSessionController.getMySessions);
+router.get('/workout-sessions/active', authMiddleware, WorkoutSessionController.getActiveSession);
 router.get('/workout-sessions/stats/summary', authMiddleware, WorkoutSessionController.getStatsSummary);
 router.get('/workout-sessions/:id', authMiddleware, WorkoutSessionController.getSessionById);
+router.patch('/workout-sessions/:id', authMiddleware, WorkoutSessionController.updateSession);
+router.delete('/workout-sessions/:id', authMiddleware, WorkoutSessionController.deleteSession);
 
 // Hydration
 router.post('/hydration', authMiddleware, HydrationController.addWater);
@@ -53,6 +57,9 @@ router.delete('/measurements/:id', authMiddleware, MeasurementController.delete)
 // Users
 router.get('/users', UserController.getAllUsers);
 router.delete('/users/:id', UserController.deleteUser);
+
+// Admin Stats
+router.get('/admin/stats', AdminController.getDashboardStats);
 
 // Upload
 router.post('/upload', upload.single('gif'), async (req, res) => {
