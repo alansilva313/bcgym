@@ -18,6 +18,7 @@ class User extends Model {
     public waterReminderInterval!: number;
     public xp!: number;
     public level!: number;
+    public workoutTime!: string; // Preferred workout time, e.g. '18:00'
 }
 
 User.init({
@@ -87,6 +88,10 @@ User.init({
         type: DataTypes.INTEGER,
         allowNull: false,
         defaultValue: 1,
+    },
+    workoutTime: {
+        type: DataTypes.STRING,
+        allowNull: true,
     }
 }, {
     sequelize,

@@ -10,7 +10,7 @@ const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 export const register = async (req: Request, res: Response) => {
     try {
-        const { name, email, password, goal, height, weight, gender, waterReminderInterval } = req.body;
+        const { name, email, password, goal, height, weight, gender, waterReminderInterval, workoutTime } = req.body;
 
         const existingUser = await User.findOne({ where: { email } });
         if (existingUser) {
@@ -28,7 +28,8 @@ export const register = async (req: Request, res: Response) => {
             weight,
             gender,
             waterReminderInterval: waterReminderInterval || 0,
-            language: req.body.language || 'pt'
+            language: req.body.language || 'pt',
+            workoutTime: workoutTime || null
         });
 
         const token = jwt.sign({ id: user.id }, JWT_SECRET, { expiresIn: '7d' });
@@ -127,7 +128,7 @@ export const getMe = async (req: Request, res: Response) => {
 export const updateMe = async (req: Request, res: Response) => {
     try {
         const userId = (req as any).userId;
-        const { name, goal, height, weight, language, age, birthDate, gender, waterReminderInterval } = req.body;
+        const { name, goal, height, weight, language, age, birthDate, gender, waterReminderInterval, workoutTime } = req.body;
 
         const user = await User.findByPk(userId);
         if (!user) {
@@ -143,7 +144,8 @@ export const updateMe = async (req: Request, res: Response) => {
             age: age !== undefined ? age : user.age,
             birthDate: birthDate !== undefined ? birthDate : user.birthDate,
             gender: gender || user.gender,
-            waterReminderInterval: waterReminderInterval !== undefined ? waterReminderInterval : user.waterReminderInterval
+            waterReminderInterval: waterReminderInterval !== undefined ? waterReminderInterval : user.waterReminderInterval,
+            workoutTime: workoutTime !== undefined ? workoutTime : user.workoutTime
         });
 
         res.json(user);
