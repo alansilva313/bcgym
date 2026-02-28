@@ -7,6 +7,7 @@ import { User } from '../models/User';
 const JWT_SECRET = process.env.JWT_SECRET || 'super_secret_gym_key';
 const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
+
 export const register = async (req: Request, res: Response) => {
     try {
         const { name, email, password, goal, height, weight, gender } = req.body;
