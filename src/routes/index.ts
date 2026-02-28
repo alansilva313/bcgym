@@ -8,6 +8,7 @@ import { MeasurementController } from '../controllers/MeasurementController';
 import * as UserController from '../controllers/UserController';
 import { authMiddleware } from '../middleware/auth';
 import { upload } from '../middleware/upload';
+import { uploadToSupabase } from '../services/supabaseStorage';
 
 const router = Router();
 
@@ -53,20 +54,23 @@ router.delete('/measurements/:id', authMiddleware, MeasurementController.delete)
 router.get('/users', UserController.getAllUsers);
 router.delete('/users/:id', UserController.deleteUser);
 
-import { uploadToSupabase } from '../services/supabaseStorage';
-
 // Upload
 router.post('/upload', upload.single('gif'), async (req, res) => {
     try {
-        if (!req.file) return res.status(400).json({ error: 'Nenhum arquivo enviado' });
+        if (!req.file) {
+            return res.status(400).json({ error: 'Nenhum arquivo recebido pelo servidor.' });
+        }
 
-        // Envia para o Supabase Storage em vez de salvar no disco local
+        console.log('Iniciando upload para o Supabase:', req.file.originalname);
         const url = await uploadToSupabase(req.file);
 
         res.json({ url });
     } catch (error: any) {
-        console.error('Erro no upload para o Supabase:', error.message);
-        res.status(500).json({ error: 'Falha ao processar upload para o Supabase.' });
+        console.error('Erro detalhado no upload:', error);
+        res.status(500).json({
+            error: 'Falha no servidor ao processar o GIF.',
+            details: error.message
+        });
     }
 });
 
