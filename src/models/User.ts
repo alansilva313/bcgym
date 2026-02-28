@@ -21,6 +21,10 @@ class User extends Model {
     public xp!: number;
     public level!: number;
     public workoutTime!: string; // Preferred workout time, e.g. '18:00'
+    public pairingCode!: string; // Code for students to share with trainers
+    public trainerId?: number;   // FK to the trainer (User)
+    public licenseNumber?: string; // For trainers
+    public role!: 'student' | 'trainer' | 'admin';
 }
 
 User.init({
@@ -102,6 +106,28 @@ User.init({
     workoutTime: {
         type: DataTypes.STRING,
         allowNull: true,
+    },
+    pairingCode: {
+        type: DataTypes.STRING,
+        allowNull: true,
+        unique: true,
+    },
+    trainerId: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+        references: {
+            model: 'users',
+            key: 'id'
+        }
+    },
+    licenseNumber: {
+        type: DataTypes.STRING,
+        allowNull: true,
+    },
+    role: {
+        type: DataTypes.ENUM('student', 'trainer', 'admin'),
+        allowNull: false,
+        defaultValue: 'student',
     }
 }, {
     sequelize,
@@ -110,3 +136,7 @@ User.init({
 });
 
 export { User };
+
+// Relationships
+User.belongsTo(User, { as: 'trainer', foreignKey: 'trainerId' });
+User.hasMany(User, { as: 'students', foreignKey: 'trainerId' });

@@ -7,6 +7,7 @@ import { HydrationController } from '../controllers/HydrationController';
 import { MeasurementController } from '../controllers/MeasurementController';
 import * as UserController from '../controllers/UserController';
 import * as AdminController from '../controllers/AdminController';
+import * as TrainerController from '../controllers/TrainerController';
 import { authMiddleware } from '../middleware/auth';
 import { upload } from '../middleware/upload';
 import { uploadToSupabase } from '../services/supabaseStorage';
@@ -60,6 +61,12 @@ router.delete('/users/:id', UserController.deleteUser);
 
 // Admin Stats
 router.get('/admin/stats', AdminController.getDashboardStats);
+
+// Trainer Actions
+router.post('/trainer/link', authMiddleware, TrainerController.linkStudent);
+router.get('/trainer/students', authMiddleware, TrainerController.getMyStudents);
+router.get('/trainer/students/:studentId/workouts', authMiddleware, TrainerController.getStudentWorkout);
+router.post('/trainer/students/:studentId/workouts', authMiddleware, TrainerController.assignWorkoutToStudent);
 
 // Upload
 router.post('/upload', upload.single('gif'), async (req, res) => {

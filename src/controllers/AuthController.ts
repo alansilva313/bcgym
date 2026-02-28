@@ -7,6 +7,15 @@ import { User } from '../models/User';
 const JWT_SECRET = process.env.JWT_SECRET || 'super_secret_gym_key';
 const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
+const generatePairingCode = () => {
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // No confusing I, O, 1, 0
+    let code = 'GB-';
+    for (let i = 0; i < 5; i++) {
+        code += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return code;
+};
+
 
 export const register = async (req: Request, res: Response) => {
     try {
@@ -30,7 +39,9 @@ export const register = async (req: Request, res: Response) => {
             gender,
             waterReminderInterval: waterReminderInterval || 0,
             language: req.body.language || 'pt',
-            workoutTime: workoutTime || null
+            workoutTime: workoutTime || null,
+            pairingCode: generatePairingCode(),
+            role: req.body.role || 'student'
         });
 
         const token = jwt.sign({ id: user.id }, JWT_SECRET, { expiresIn: '7d' });
@@ -90,10 +101,11 @@ export const googleLogin = async (req: Request, res: Response) => {
         if (!user) {
             // Create user mapped with Google
             user = await User.create({
-                email,
                 name,
                 googleId,
                 language: language || 'pt',
+                pairingCode: generatePairingCode(),
+                role: 'student'
                 // other default fields stay null
             });
         } else if (!user.googleId) {
@@ -120,8 +132,15 @@ export const getMe = async (req: Request, res: Response) => {
         if (!user) {
             return res.status(404).json({ error: 'Usuário não encontrado' });
         }
+
+        // Generate pairing code for legacy users if missing
+        if (!user.pairingCode) {
+            await user.update({ pairingCode: generatePairingCode() });
+        }
+
         res.json(user);
     } catch (error) {
+        console.error('Error fetching profile:', error);
         res.status(500).json({ error: 'Erro ao buscar perfil' });
     }
 };
