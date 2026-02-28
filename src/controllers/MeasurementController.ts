@@ -10,6 +10,7 @@ export class MeasurementController {
             const measurement = await Measurement.create(data);
             res.status(201).json(measurement);
         } catch (error) {
+            console.error('Error creating measurement:', error);
             res.status(500).json({ error: 'Erro ao salvar medidas' });
         }
     }
@@ -23,6 +24,7 @@ export class MeasurementController {
             });
             res.json(measurements);
         } catch (error) {
+            console.error('Error fetching measurements:', error);
             res.status(500).json({ error: 'Erro ao buscar histórico de medidas' });
         }
     }
@@ -36,6 +38,7 @@ export class MeasurementController {
             });
             res.json(measurement);
         } catch (error) {
+            console.error('Error fetching latest measurement:', error);
             res.status(500).json({ error: 'Erro ao buscar última medida' });
         }
     }
@@ -56,6 +59,7 @@ export class MeasurementController {
             await measurement.destroy();
             res.json({ message: 'Medida excluída com sucesso' });
         } catch (error) {
+            console.error('Error deleting measurement:', error);
             res.status(500).json({ error: 'Erro ao excluir medida' });
         }
     }

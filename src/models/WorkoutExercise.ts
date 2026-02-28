@@ -57,11 +57,4 @@ WorkoutExercise.init({
     tableName: 'workout_exercises',
 });
 
-// Relationships
-Workout.belongsToMany(Exercise, { through: WorkoutExercise, as: 'exercises', foreignKey: 'workoutId' });
-Exercise.belongsToMany(Workout, { through: WorkoutExercise, as: 'workouts', foreignKey: 'exerciseId' });
-Workout.hasMany(WorkoutExercise, { foreignKey: 'workoutId', as: 'workoutExercises' });
-WorkoutExercise.belongsTo(Workout, { foreignKey: 'workoutId' });
-WorkoutExercise.belongsTo(Exercise, { foreignKey: 'exerciseId', as: 'exercise' });
-
 export { WorkoutExercise };

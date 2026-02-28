@@ -44,6 +44,7 @@ export const getMyWorkouts = async (req: Request, res: Response) => {
         });
         res.json(workouts);
     } catch (error) {
+        console.error('Error in getMyWorkouts:', error);
         res.status(500).json({ error: 'Failed to fetch workouts' });
     }
 };
@@ -121,6 +122,7 @@ export const deleteWorkout = async (req: Request, res: Response) => {
 
         res.json({ message: 'Workout deleted' });
     } catch (error) {
+        console.error('Error deleting workout:', error);
         res.status(500).json({ error: 'Error deleting workout' });
     }
 };

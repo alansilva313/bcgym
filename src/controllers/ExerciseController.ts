@@ -14,6 +14,7 @@ export const getAllExercises = async (req: Request, res: Response) => {
         const exercises = await Exercise.findAll({ where: filters });
         res.json(exercises);
     } catch (error) {
+        console.error('Error fetching exercises:', error);
         res.status(500).json({ error: 'Falha ao buscar exercícios' });
     }
 };
@@ -45,6 +46,7 @@ export const createExercise = async (req: Request, res: Response) => {
 
         res.status(201).json(exercise);
     } catch (error) {
+        console.error('Error creating exercise:', error);
         res.status(500).json({ error: 'Falha ao criar exercício' });
     }
 };
@@ -56,6 +58,7 @@ export const getExerciseById = async (req: Request, res: Response) => {
         if (!exercise) return res.status(404).json({ error: 'Exercício não encontrado' });
         res.json(exercise);
     } catch (error) {
+        console.error('Error fetching exercise by ID:', error);
         res.status(500).json({ error: 'Erro ao buscar exercício' });
     }
 };
@@ -80,6 +83,7 @@ export const updateExercise = async (req: Request, res: Response) => {
 
         res.json(exercise);
     } catch (error) {
+        console.error('Error updating exercise:', error);
         res.status(500).json({ error: 'Falha ao atualizar exercício' });
     }
 };
@@ -93,6 +97,7 @@ export const deleteExercise = async (req: Request, res: Response) => {
         await exercise.destroy();
         res.json({ message: 'Exercício excluído com sucesso' });
     } catch (error) {
+        console.error('Error deleting exercise:', error);
         res.status(500).json({ error: 'Falha ao excluir exercício' });
     }
 };

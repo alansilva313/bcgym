@@ -51,9 +51,4 @@ Workout.init({
     tableName: 'workouts',
 });
 
-// Relationships
-User.hasMany(Workout, { foreignKey: 'userId', as: 'workouts' });
-Workout.belongsTo(User, { foreignKey: 'userId', as: 'user' });
-Workout.belongsTo(User, { foreignKey: 'trainerId', as: 'trainer' });
-
 export { Workout };
