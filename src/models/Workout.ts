@@ -5,6 +5,7 @@ import { User } from './User';
 class Workout extends Model {
     public id!: number;
     public userId!: number;
+    public trainerId?: number;
     public name!: string;
     public goal!: string;
     public daysOfWeek!: string; // Stored as comma separated string e.g. 'Monday,Wednesday,Friday'
@@ -19,6 +20,14 @@ Workout.init({
     userId: {
         type: DataTypes.INTEGER,
         allowNull: false,
+        references: {
+            model: User,
+            key: 'id'
+        }
+    },
+    trainerId: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
         references: {
             model: User,
             key: 'id'
@@ -45,5 +54,6 @@ Workout.init({
 // Relationships
 User.hasMany(Workout, { foreignKey: 'userId', as: 'workouts' });
 Workout.belongsTo(User, { foreignKey: 'userId', as: 'user' });
+Workout.belongsTo(User, { foreignKey: 'trainerId', as: 'trainer' });
 
 export { Workout };

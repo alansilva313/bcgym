@@ -129,7 +129,13 @@ export const googleLogin = async (req: Request, res: Response) => {
 export const getMe = async (req: Request, res: Response) => {
     try {
         const userId = (req as any).userId;
-        const user = await User.findByPk(userId);
+        const user = await User.findByPk(userId, {
+            include: [{
+                model: User,
+                as: 'trainer',
+                attributes: ['name']
+            }]
+        });
         if (!user) {
             return res.status(404).json({ error: 'Usuário não encontrado' });
         }

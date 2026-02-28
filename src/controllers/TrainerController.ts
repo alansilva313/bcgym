@@ -79,6 +79,7 @@ export const assignWorkoutToStudent = async (req: Request, res: Response) => {
 
         const workout = await Workout.create({
             userId: Number(studentId),
+            trainerId,
             name,
             goal,
             daysOfWeek
