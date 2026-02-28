@@ -133,7 +133,7 @@ export const getMe = async (req: Request, res: Response) => {
             include: [{
                 model: User,
                 as: 'trainer',
-                attributes: ['name']
+                attributes: ['name', 'licenseNumber']
             }]
         });
         if (!user) {

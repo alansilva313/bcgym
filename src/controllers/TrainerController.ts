@@ -104,3 +104,25 @@ export const assignWorkoutToStudent = async (req: Request, res: Response) => {
         res.status(500).json({ error: 'Falha ao atribuir treino ao aluno.' });
     }
 };
+
+export const unlinkTrainer = async (req: Request, res: Response) => {
+    try {
+        const studentId = (req as any).userId;
+        const student = await User.findByPk(studentId);
+
+        if (!student) {
+            return res.status(404).json({ error: 'Usuário não encontrado.' });
+        }
+
+        if (!student.trainerId) {
+            return res.status(400).json({ error: 'Você não possui um personal trainer vinculado.' });
+        }
+
+        await student.update({ trainerId: null });
+
+        res.json({ message: 'Personal desvinculado com sucesso!' });
+    } catch (error) {
+        console.error('Unlink trainer error:', error);
+        res.status(500).json({ error: 'Falha ao desvincular personal.' });
+    }
+};

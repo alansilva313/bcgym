@@ -66,6 +66,7 @@ router.post('/trainer/link', authMiddleware, TrainerController.linkStudent);
 router.get('/trainer/students', authMiddleware, TrainerController.getMyStudents);
 router.get('/trainer/students/:studentId/workouts', authMiddleware, TrainerController.getStudentWorkout);
 router.post('/trainer/students/:studentId/workouts', authMiddleware, TrainerController.assignWorkoutToStudent);
+router.post('/trainer/unlink', authMiddleware, TrainerController.unlinkTrainer);
 
 // Upload
 router.post('/upload', upload.single('gif'), async (req, res) => {
