@@ -307,3 +307,74 @@ export const getMuscleHeatMap = async (req: Request, res: Response) => {
         res.status(500).json({ error: 'Failed to get body stats' });
     }
 };
+
+/** GET /workout-sessions/overload/:workoutId — get overload suggestions */
+export const getOverloadSuggestions = async (req: Request, res: Response) => {
+    try {
+        const userId = (req as any).userId;
+        const { workoutId } = req.params;
+
+        // 1. Get current workout exercises
+        const workout = await require('../models/Workout').Workout.findOne({
+            where: { id: workoutId },
+            include: [{ model: require('../models/Exercise').Exercise, as: 'exercises' }]
+        });
+
+        if (!workout) return res.status(404).json({ error: 'Workout not found' });
+
+        // 2. Get the last 5 completed sessions for this user
+        const lastSessions = await WorkoutSession.findAll({
+            where: { userId, status: 'completed' },
+            order: [['completedAt', 'DESC']],
+            limit: 5
+        });
+
+        const suggestions: { [key: number]: { suggestion: string, lastLoad: string } } = {};
+
+        // 3. For each exercise in the workout, check if we should suggest an increase
+        for (const ex of (workout.exercises || [])) {
+            const exerciseId = ex.id;
+
+            // Find the most recent session containing this exercise
+            let lastLog = null;
+            for (const session of lastSessions) {
+                const logs = JSON.parse(session.exerciseLogs || '[]');
+                const found = logs.find((l: any) => l.exerciseId === exerciseId);
+                if (found) {
+                    lastLog = found;
+                    break;
+                }
+            }
+
+            if (lastLog) {
+                const completedSets = lastLog.sets?.length || 0;
+
+                // Get intended sets for this exercise in this workout
+                const workoutEx = await require('../models/WorkoutExercise').WorkoutExercise.findOne({
+                    where: { workoutId, exerciseId }
+                });
+
+                const intendedSets = workoutEx?.sets || 3;
+
+                if (completedSets >= intendedSets) {
+                    const lastLoadStr = lastLog.sets[lastLog.sets.length - 1]?.load || '0';
+                    const lastLoad = parseFloat(lastLoadStr.replace(/[^0-9.]/g, '')) || 0;
+
+                    if (lastLoad > 0) {
+                        // Suggest ~5% increase
+                        const increase = Math.max(1, Math.round(lastLoad * 0.05));
+                        suggestions[exerciseId] = {
+                            suggestion: `Aumentar +${increase}kg?`,
+                            lastLoad: lastLoadStr
+                        };
+                    }
+                }
+            }
+        }
+
+        res.json(suggestions);
+    } catch (error) {
+        console.error('Overload suggestions error:', error);
+        res.status(500).json({ error: 'Failed to get suggestions' });
+    }
+};
