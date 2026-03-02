@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import { WorkoutSession } from '../models/WorkoutSession';
+import { Exercise } from '../models/Exercise';
 import { Op } from 'sequelize';
 
 /** POST /workout-sessions — start or save a session */
@@ -259,51 +260,65 @@ export const getMuscleHeatMap = async (req: Request, res: Response) => {
     try {
         const userId = (req as any).userId;
         const sevenDaysAgo = new Date();
+        sevenDaysAgo.setHours(0, 0, 0, 0);
         sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
 
+        // Find sessions from the last 7 days
         const sessions = await WorkoutSession.findAll({
             where: {
                 userId,
                 [Op.or]: [
-                    { status: 'completed', completedAt: { [Op.gte]: sevenDaysAgo } },
-                    { status: 'active', createdAt: { [Op.gte]: sevenDaysAgo } }
+                    { completedAt: { [Op.gte]: sevenDaysAgo } },
+                    { createdAt: { [Op.gte]: sevenDaysAgo } }
                 ]
             }
         });
 
-        const muscleStats: { [key: string]: number } = {
-            'Peito': 0, 'Costas': 0, 'Pernas': 0, 'Ombros': 0,
-            'Bíceps': 0, 'Tríceps': 0, 'Abdominais': 0,
-            'Panturrilha': 0, 'Glúteos': 0, 'Quadríceps': 0,
-            'Posterior': 0, 'Lombar': 0, 'Trapézio': 0
+        // Debug info to help troubleshoot
+        const debugInfo = {
+            userId,
+            sessionsCount: sessions.length,
+            sevenDaysAgo: sevenDaysAgo.toISOString(),
+            now: new Date().toISOString()
         };
 
-        // Collect exercise IDs for those that might not have muscleGroup in logs
+        const muscleStats: { [key: string]: number } = {
+            'Peito': 0, 'Costas': 0, 'Ombros': 0, 'Bíceps': 0, 'Tríceps': 0,
+            'Quadríceps': 0, 'Posterior': 0, 'Glúteos': 0, 'Panturrilha': 0,
+            'Abdominais': 0, 'Lombar': 0, 'Trapézio': 0, 'Pernas': 0
+        };
+
+        // Collect all exercise IDs or names involved in these sessions
         const exerciseIds = new Set<number>();
+        const exerciseNames = new Set<string>();
+
         sessions.forEach(s => {
             try {
                 const logs = typeof s.exerciseLogs === 'string' ? JSON.parse(s.exerciseLogs || '[]') : s.exerciseLogs;
                 if (!Array.isArray(logs)) return;
                 logs.forEach((l: any) => {
-                    if (!l.muscleGroup && l.exerciseId) {
-                        exerciseIds.add(l.exerciseId);
-                    }
+                    if (l.exerciseId) exerciseIds.add(Number(l.exerciseId));
+                    if (l.exerciseName) exerciseNames.add(String(l.exerciseName));
                 });
             } catch (e) {
-                console.error('Error identifying exercise IDs in heatmap:', e);
+                console.error('Error identifying exercises in heatmap:', e);
             }
         });
 
-        const exercises = exerciseIds.size > 0
-            ? await require('../models/Exercise').Exercise.findAll({
-                where: { id: Array.from(exerciseIds) }
-            })
+        // Fetch exercises by ID or Name to get their official muscle groups
+        const exercisesById = exerciseIds.size > 0
+            ? await Exercise.findAll({ where: { id: Array.from(exerciseIds) } })
             : [];
 
-        const idToMuscle: { [key: number]: string } = {};
-        exercises.forEach((ex: any) => {
-            idToMuscle[ex.id] = ex.muscle_group;
-        });
+        const exercisesByName = exerciseNames.size > 0
+            ? await Exercise.findAll({ where: { name: Array.from(exerciseNames) } })
+            : [];
+
+        const idToMuscle: Record<number, string> = {};
+        exercisesById.forEach((ex: any) => { idToMuscle[ex.id] = ex.muscle_group; });
+
+        const nameToMuscle: Record<string, string> = {};
+        exercisesByName.forEach((ex: any) => { nameToMuscle[ex.name] = ex.muscle_group; });
 
         const normalize = (s: string) => {
             if (!s) return "";
@@ -316,20 +331,21 @@ export const getMuscleHeatMap = async (req: Request, res: Response) => {
                 if (!Array.isArray(logs)) return;
 
                 logs.forEach((l: any) => {
-                    const muscleInput = l.muscleGroup || idToMuscle[l.exerciseId];
+                    // Try to get muscle group from DB mapping first, then name mapping, then log
+                    const muscleInput = idToMuscle[Number(l.exerciseId)] || nameToMuscle[String(l.exerciseName)] || l.muscleGroup;
                     if (!muscleInput) return;
 
                     const sets = l.sets?.length || 0;
                     if (sets === 0) return;
 
-                    const rawGroups = muscleInput.split(/[,e/&]|\s+e\s+/).map((s: string) => s.trim());
+                    const rawGroups = muscleInput.split(/[,/&]|\s+[eE]\s+/).map((s: string) => s.trim());
 
                     rawGroups.forEach((rawGroup: string) => {
                         if (!rawGroup) return;
                         const normalizedMuscle = normalize(rawGroup);
 
-                        // Accumulate using floating point, round at the very end
-                        if (normalizedMuscle.includes('peit')) { // Match Peito, Peitoral, etc.
+                        // Match and accumulate
+                        if (normalizedMuscle.includes('peit')) { // Peito, Peitoral
                             muscleStats['Peito'] += sets;
                             muscleStats['Tríceps'] += sets * 0.4;
                             muscleStats['Ombros'] += sets * 0.3;
@@ -342,39 +358,55 @@ export const getMuscleHeatMap = async (req: Request, res: Response) => {
                             muscleStats['Ombros'] += sets;
                             muscleStats['Tríceps'] += sets * 0.2;
                             muscleStats['Trapézio'] += sets * 0.2;
-                        } else if (normalizedMuscle.includes('perna') || normalizedMuscle.includes('quadriceps') || normalizedMuscle.includes('coxa')) {
+                        } else if (normalizedMuscle.includes('quadriceps') || normalizedMuscle.includes('coxa') || normalizedMuscle.includes('anterior')) {
                             muscleStats['Quadríceps'] += sets;
-                            muscleStats['Glúteos'] += sets * 0.3;
-                            muscleStats['Pernas'] += sets;
+                            muscleStats['Glúteos'] += sets * 0.2;
                         } else if (normalizedMuscle.includes('posterior') || normalizedMuscle.includes('isquio')) {
                             muscleStats['Posterior'] += sets;
                             muscleStats['Glúteos'] += sets * 0.4;
                             muscleStats['Lombar'] += sets * 0.2;
-                        } else if (normalizedMuscle.includes('braco') || normalizedMuscle.includes('bicep') || normalizedMuscle.includes('tricep')) {
-                            if (normalizedMuscle.includes('bicep')) muscleStats['Bíceps'] += sets;
-                            if (normalizedMuscle.includes('tricep')) muscleStats['Tríceps'] += sets;
-                            if (normalizedMuscle.includes('braco')) {
-                                muscleStats['Bíceps'] += sets;
-                                muscleStats['Tríceps'] += sets;
-                            }
+                        } else if (normalizedMuscle.includes('perna')) {
+                            muscleStats['Quadríceps'] += sets * 0.5;
+                            muscleStats['Posterior'] += sets * 0.5;
+                            muscleStats['Glúteos'] += sets * 0.3;
+                            muscleStats['Pernas'] += sets;
+                        } else if (normalizedMuscle.includes('gluteo')) {
+                            muscleStats['Glúteos'] += sets;
+                        } else if (normalizedMuscle.includes('panturrilha') || normalizedMuscle.includes('gemeos')) {
+                            muscleStats['Panturrilha'] += sets;
+                        } else if (normalizedMuscle.includes('bicep')) {
+                            muscleStats['Bíceps'] += sets;
+                        } else if (normalizedMuscle.includes('tricep')) {
+                            muscleStats['Tríceps'] += sets;
+                        } else if (normalizedMuscle.includes('abdom') || normalizedMuscle.includes('core')) {
+                            muscleStats['Abdominais'] += sets;
+                        } else if (normalizedMuscle.includes('trapezio')) {
+                            muscleStats['Trapézio'] += sets;
+                        } else if (normalizedMuscle.includes('lombar')) {
+                            muscleStats['Lombar'] += sets;
                         } else {
+                            // Direct matching
                             const match = Object.keys(muscleStats).find(k => normalize(k) === normalizedMuscle);
                             if (match) muscleStats[match] += sets;
                         }
                     });
                 });
             } catch (e) {
-                console.error('Error processing session in heatmap:', e);
+                console.error('Heatmap processing error:', e);
             }
         });
 
-        // Round all values at the end
-        const roundedStats: { [key: string]: number } = {};
+        // Final rounding and normalization
+        const finalStats: any = {};
         Object.keys(muscleStats).forEach(key => {
-            roundedStats[key] = Math.round(muscleStats[key] * 10) / 10; // Keep one decimal for progress bars
+            finalStats[key] = Math.max(0, Math.round(muscleStats[key] * 10) / 10);
         });
 
-        res.json(roundedStats);
+        res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+        res.json({
+            ...finalStats,
+            _debug: debugInfo
+        });
     } catch (error) {
         console.error('HeatMap stats error:', error);
         res.status(500).json({ error: 'Failed to get body stats' });
