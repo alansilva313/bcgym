@@ -44,8 +44,9 @@ export const getMyWorkouts = async (req: Request, res: Response) => {
         });
         res.json(workouts);
     } catch (error) {
-        console.error('Error in getMyWorkouts:', error);
-        res.status(500).json({ error: 'Failed to fetch workouts' });
+        console.error('--- DEBUG: Error in getMyWorkouts ---');
+        console.error(error);
+        res.status(500).json({ error: 'Failed to fetch workouts', details: (error as any).message });
     }
 };
 
@@ -71,8 +72,9 @@ export const getWorkoutById = async (req: Request, res: Response) => {
         if (!workout) return res.status(404).json({ error: 'Workout not found' });
         res.json(workout);
     } catch (error) {
-        console.error('getWorkoutById error:', error);
-        res.status(500).json({ error: 'Failed to fetch workout' });
+        console.error('--- DEBUG: getWorkoutById error ---');
+        console.error(error);
+        res.status(500).json({ error: 'Failed to fetch workout', details: (error as any).message });
     }
 };
 

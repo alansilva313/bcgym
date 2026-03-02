@@ -40,6 +40,7 @@ router.post('/workout-sessions', authMiddleware, WorkoutSessionController.create
 router.get('/workout-sessions', authMiddleware, WorkoutSessionController.getMySessions);
 router.get('/workout-sessions/active', authMiddleware, WorkoutSessionController.getActiveSession);
 router.get('/workout-sessions/stats/summary', authMiddleware, WorkoutSessionController.getStatsSummary);
+router.get('/workout-sessions/stats/heatmap', authMiddleware, WorkoutSessionController.getMuscleHeatMap);
 router.get('/workout-sessions/:id', authMiddleware, WorkoutSessionController.getSessionById);
 router.patch('/workout-sessions/:id', authMiddleware, WorkoutSessionController.updateSession);
 router.delete('/workout-sessions/:id', authMiddleware, WorkoutSessionController.deleteSession);

@@ -253,3 +253,57 @@ export const deleteSession = async (req: Request, res: Response) => {
         res.status(500).json({ error: 'Failed to delete session' });
     }
 };
+
+/** GET /workout-sessions/stats/heatmap — muscle heat map data */
+export const getMuscleHeatMap = async (req: Request, res: Response) => {
+    try {
+        const userId = (req as any).userId;
+        const sevenDaysAgo = new Date();
+        sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+
+        const sessions = await WorkoutSession.findAll({
+            where: {
+                userId,
+                status: 'completed',
+                completedAt: { [Op.gte]: sevenDaysAgo }
+            }
+        });
+
+        const muscleStats: { [key: string]: number } = {
+            'Peito': 0, 'Costas': 0, 'Pernas': 0, 'Ombros': 0,
+            'Bíceps': 0, 'Tríceps': 0, 'Abdominais': 0,
+            'Panturrilha': 0, 'Glúteos': 0, 'Quadríceps': 0,
+            'Posterior': 0, 'Lombar': 0, 'Trapézio': 0
+        };
+
+        const exerciseIds = new Set<number>();
+        sessions.forEach(s => {
+            const logs = JSON.parse(s.exerciseLogs || '[]');
+            logs.forEach((l: any) => exerciseIds.add(l.exerciseId));
+        });
+
+        const exercises = await require('../models/Exercise').Exercise.findAll({
+            where: { id: Array.from(exerciseIds) }
+        });
+
+        const idToMuscle: { [key: number]: string } = {};
+        exercises.forEach((ex: any) => {
+            idToMuscle[ex.id] = ex.muscle_group;
+        });
+
+        sessions.forEach(s => {
+            const logs = JSON.parse(s.exerciseLogs || '[]');
+            logs.forEach((l: any) => {
+                const muscle = idToMuscle[l.exerciseId];
+                if (muscle && muscleStats[muscle] !== undefined) {
+                    muscleStats[muscle] += (l.sets?.length || 0);
+                }
+            });
+        });
+
+        res.json(muscleStats);
+    } catch (error) {
+        console.error('HeatMap stats error:', error);
+        res.status(500).json({ error: 'Failed to get body stats' });
+    }
+};
