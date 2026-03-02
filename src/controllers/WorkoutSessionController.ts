@@ -264,8 +264,10 @@ export const getMuscleHeatMap = async (req: Request, res: Response) => {
         const sessions = await WorkoutSession.findAll({
             where: {
                 userId,
-                status: 'completed',
-                completedAt: { [Op.gte]: sevenDaysAgo }
+                [Op.or]: [
+                    { status: 'completed', completedAt: { [Op.gte]: sevenDaysAgo } },
+                    { status: 'active', createdAt: { [Op.gte]: sevenDaysAgo } }
+                ]
             }
         });
 
@@ -291,13 +293,57 @@ export const getMuscleHeatMap = async (req: Request, res: Response) => {
             idToMuscle[ex.id] = ex.muscle_group;
         });
 
+        const normalize = (s: string) => s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+
         sessions.forEach(s => {
             const logs = JSON.parse(s.exerciseLogs || '[]');
             logs.forEach((l: any) => {
-                const muscle = idToMuscle[l.exerciseId];
-                if (muscle && muscleStats[muscle] !== undefined) {
-                    muscleStats[muscle] += (l.sets?.length || 0);
-                }
+                const muscleInput = idToMuscle[l.exerciseId];
+                if (!muscleInput) return;
+
+                const sets = l.sets?.length || 0;
+                // Split muscle group if it contains multiple items like "Peito e Tríceps"
+                const rawGroups = muscleInput.split(/[,e/&]|\s+e\s+/).map(s => s.trim());
+
+                rawGroups.forEach(rawGroup => {
+                    if (!rawGroup) return;
+                    const normalizedMuscle = normalize(rawGroup);
+
+                    // Smarter muscle recruitment mapping
+                    if (normalizedMuscle.includes('peito')) {
+                        muscleStats['Peito'] += sets;
+                        muscleStats['Tríceps'] += Math.round(sets * 0.4);
+                        muscleStats['Ombros'] += Math.round(sets * 0.3);
+                    } else if (normalizedMuscle.includes('costas')) {
+                        muscleStats['Costas'] += sets;
+                        muscleStats['Bíceps'] += Math.round(sets * 0.4);
+                        muscleStats['Trapézio'] += Math.round(sets * 0.3);
+                        muscleStats['Lombar'] += Math.round(sets * 0.2);
+                    } else if (normalizedMuscle.includes('ombro')) {
+                        muscleStats['Ombros'] += sets;
+                        muscleStats['Tríceps'] += Math.round(sets * 0.2);
+                        muscleStats['Trapézio'] += Math.round(sets * 0.2);
+                    } else if (normalizedMuscle.includes('perna') || normalizedMuscle.includes('quadriceps')) {
+                        muscleStats['Quadríceps'] += sets;
+                        muscleStats['Glúteos'] += Math.round(sets * 0.3);
+                        muscleStats['Pernas'] += sets;
+                    } else if (normalizedMuscle.includes('posterior')) {
+                        muscleStats['Posterior'] += sets;
+                        muscleStats['Glúteos'] += Math.round(sets * 0.4);
+                        muscleStats['Lombar'] += Math.round(sets * 0.2);
+                    } else if (normalizedMuscle.includes('braco') || normalizedMuscle.includes('bicep') || normalizedMuscle.includes('tricep')) {
+                        if (normalizedMuscle.includes('bicep')) muscleStats['Bíceps'] += sets;
+                        if (normalizedMuscle.includes('tricep')) muscleStats['Tríceps'] += sets;
+                        if (normalizedMuscle.includes('braco')) {
+                            muscleStats['Bíceps'] += sets;
+                            muscleStats['Tríceps'] += sets;
+                        }
+                    } else {
+                        // Generic matching for direct hits
+                        const match = Object.keys(muscleStats).find(k => normalize(k) === normalizedMuscle);
+                        if (match) muscleStats[match] += sets;
+                    }
+                });
             });
         });
 
