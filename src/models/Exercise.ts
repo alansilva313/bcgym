@@ -9,6 +9,7 @@ class Exercise extends Model {
     public equipment!: string;
     public description!: string;
     public gif_url!: string;
+    public gif_urls!: string[];
     public type!: string; // 'machine', 'free_weight', 'calisthenics'
 }
 
@@ -41,6 +42,11 @@ Exercise.init({
     gif_url: {
         type: DataTypes.TEXT,
         allowNull: true,
+    },
+    gif_urls: {
+        type: DataTypes.JSON,
+        allowNull: true,
+        defaultValue: [],
     },
     type: {
         type: DataTypes.STRING,

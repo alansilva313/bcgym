@@ -30,9 +30,16 @@ const normalizeGifUrl = (url: string) => {
     return url;
 };
 
+const normalizeGifUrls = (urls: (string | undefined)[]) => {
+    if (!urls || !Array.isArray(urls)) return [];
+    return urls.filter(u => u).map(u => normalizeGifUrl(u!));
+};
+
 export const createExercise = async (req: Request, res: Response) => {
     try {
-        const { name, muscle_group, level, equipment, description, gif_url, type } = req.body;
+        const { name, muscle_group, level, equipment, description, gif_url, gif_urls, type } = req.body;
+
+        const normalizedUrls = normalizeGifUrls(gif_urls || [gif_url]);
 
         const exercise = await Exercise.create({
             name,
@@ -40,7 +47,8 @@ export const createExercise = async (req: Request, res: Response) => {
             level,
             equipment,
             description,
-            gif_url: normalizeGifUrl(gif_url),
+            gif_url: normalizedUrls[0] || normalizeGifUrl(gif_url),
+            gif_urls: normalizedUrls,
             type
         });
 
@@ -66,10 +74,12 @@ export const getExerciseById = async (req: Request, res: Response) => {
 export const updateExercise = async (req: Request, res: Response) => {
     try {
         const { id } = req.params;
-        const { name, muscle_group, level, equipment, description, gif_url, type } = req.body;
+        const { name, muscle_group, level, equipment, description, gif_url, gif_urls, type } = req.body;
 
         const exercise = await Exercise.findByPk(Number(id));
         if (!exercise) return res.status(404).json({ error: 'Exercício não encontrado' });
+
+        const normalizedUrls = normalizeGifUrls(gif_urls || [gif_url]);
 
         await exercise.update({
             name,
@@ -77,7 +87,8 @@ export const updateExercise = async (req: Request, res: Response) => {
             level,
             equipment,
             description,
-            gif_url: normalizeGifUrl(gif_url),
+            gif_url: normalizedUrls[0] || normalizeGifUrl(gif_url),
+            gif_urls: normalizedUrls,
             type
         });
 

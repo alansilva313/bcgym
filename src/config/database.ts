@@ -11,14 +11,15 @@ const sequelizeOptions: Options = {
     dialectModule: pg,
     logging: false,
     define: {
-        underscored: true, // This will map camelCase properties to snake_case columns
+        underscored: true,
         timestamps: true,
     },
     pool: {
-        max: 3, // Reduce max connections for cloud pooler limits
+        max: 2, // Even more conservative for serverless
         min: 0,
         acquire: 30000,
-        idle: 10000,
+        idle: 1000, // Release connections faster (1s instead of 10s)
+        evict: 1000,
     },
 };
 
